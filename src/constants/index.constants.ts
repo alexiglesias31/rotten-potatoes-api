@@ -1,0 +1,1 @@
+export const WELCOME_MESSAGE = 'Welcome to Rotten Potatoes, by Alex'
