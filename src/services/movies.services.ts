@@ -6,6 +6,10 @@ export class MoviesService {
         return Movie.find({}).exec()
     }
 
+    public findOne(id: string): Promise<IMovie|null> {
+        return Movie.findById(id).exec()
+    }
+
     public add(movie: IMovie): Promise<IMovie> {
         const newMovie = new Movie(movie)
         return newMovie.save()

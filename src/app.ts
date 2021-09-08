@@ -30,8 +30,7 @@ class App {
         const indexController = new IndexController()
         this.app.use('/', indexController.router)
 
-        const moviesController = new MoviesController(new MoviesService())
-        this.app.use('/movies', moviesController.router)
+        const moviesController = new MoviesController(this.app, new MoviesService())
     }
 
     private setMongooseConfig = async () => {

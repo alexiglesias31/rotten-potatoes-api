@@ -1,20 +1,22 @@
-import { Request, Response, Router } from 'express'
+import { Application, Request, Response, Router } from 'express'
 import { MoviesService } from '../services/movies.services'
 
 export class MoviesController {
-    public router = Router()
 
-    constructor(private moviesService: MoviesService) {
-        this.setRoutes()
+    constructor(app: Application, private moviesService: MoviesService) {
+        this.setRoutes(app)
     }
 
-    private setRoutes() {
-        this.router
-            .get('/', this.getAll)
-            .post('/', this.add)
-            .put('/:id', this.update)
-            .post('/:id', this.update)
-            .delete('/:id', this.delete)
+    private setRoutes(app: Application) {
+        app.route('/movies')
+            .get(this.getAll)
+            .post(this.add)
+
+        app.route('/movies/:id')
+            .get(this.getOne)
+            .post(this.add)
+            .put(this.update)
+            .delete(this.delete)
     }
 
     private getAll = async (_: Request, res: Response) => {
@@ -26,8 +28,23 @@ export class MoviesController {
         }
     }
 
+    private getOne = async (req: Request, res: Response) => {
+        if(req.params.id === undefined) return res.status(500).send({error: 'Missing required id param'})
+        try {
+            const movie = await this.moviesService.findOne(req.params.id)
+
+            if(!movie) {
+                return res.status(500).send({error: 'There is no movie with the required id'})
+            }
+
+            res.send(movie)
+        } catch(e: any) {
+            res.status(500).send(e.message)
+        }
+    }
+
     private add = async (req: Request, res: Response) => {
-        if(!this.verifyReqBody(req)) res.status(500).send({error: 'There is some required field(s) missing'})
+        if(!this.verifyReqBody(req)) return res.status(500).send({error: 'There is some required field(s) missing'})
         try {
             const newMovie = await this.moviesService.add(req.body)
             res.send(newMovie)
@@ -37,9 +54,12 @@ export class MoviesController {
     }
 
     private update = async (req: Request, res: Response) => {
-        if(!this.verifyReqBody(req,true)) res.status(500).send({error: 'There is some required field(s) missing'})
+        if(!this.verifyReqBody(req,true)) return res.status(500).send({error: 'There is some required field(s) missing'})
         try {
             const updatedMovie = await this.moviesService.update(req.params.id, req.body)
+
+            if(!updatedMovie) return res.status(500).send({error: 'There is no movie with the required id'})
+
             res.send(updatedMovie)
         } catch(e: any) {
             res.status(500).send(e.message)
@@ -47,7 +67,7 @@ export class MoviesController {
     }
 
     private delete = async (req: Request, res: Response) => {
-        if(req.params.id === undefined) res.status(500).send({error: 'There is some required field(s) missing'})
+        if(req.params.id === undefined) return res.status(500).send({error: 'There is some required field(s) missing'})
         try {
             const deletedMovie = await this.moviesService.delete(req.params.id)
             res.send(deletedMovie)
